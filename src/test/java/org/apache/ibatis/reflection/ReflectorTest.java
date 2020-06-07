@@ -1,5 +1,5 @@
 /**
- *    Copyright 2009-2019 the original author or authors.
+ *    Copyright 2009-2020 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.apache.ibatis.reflection;
 
+import static com.googlecode.catchexception.apis.BDDCatchException.*;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.Serializable;
@@ -24,9 +26,6 @@ import java.util.List;
 import org.apache.ibatis.reflection.invoker.Invoker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static com.googlecode.catchexception.apis.BDDCatchException.*;
-import static org.assertj.core.api.BDDAssertions.then;
 
 class ReflectorTest {
 
@@ -213,7 +212,7 @@ class ReflectorTest {
     assertNotNull(reflector.getSetInvoker("prop1"));
 
     Class<?> paramType = reflector.getSetterType("prop2");
-    assertTrue(String.class.equals(paramType) || Integer.class.equals(paramType));
+    assertTrue(String.class.equals(paramType) || Integer.class.equals(paramType) || boolean.class.equals(paramType));
 
     Invoker ambiguousInvoker = reflector.getSetInvoker("prop2");
     Object[] param = String.class.equals(paramType)? new String[]{"x"} : new Integer[]{1};
@@ -225,7 +224,7 @@ class ReflectorTest {
   }
 
   @Test
-  public void shouldTwoGettersForNonBooleanPropertyThrowException() throws Exception {
+  void shouldTwoGettersForNonBooleanPropertyThrowException() throws Exception {
     @SuppressWarnings("unused")
     class BeanClass {
       public Integer getProp1() {return 1;}
@@ -257,7 +256,7 @@ class ReflectorTest {
   }
 
   @Test
-  public void shouldTwoGettersWithDifferentTypesThrowException() throws Exception {
+  void shouldTwoGettersWithDifferentTypesThrowException() throws Exception {
     @SuppressWarnings("unused")
     class BeanClass {
       public Integer getProp1() {return 1;}
