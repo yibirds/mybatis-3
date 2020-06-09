@@ -55,15 +55,27 @@ public class MetaClass {
    * @return
    */
   public MetaClass metaClassForProperty(String name) {
+    // 获取get方法返回的类型
     Class<?> propType = reflector.getGetterType(name);
     return MetaClass.forClass(propType, reflectorFactory);
   }
 
+  /**
+   * 寻找属性
+   * @param name
+   * @return
+   */
   public String findProperty(String name) {
     StringBuilder prop = buildProperty(name, new StringBuilder());
     return prop.length() > 0 ? prop.toString() : null;
   }
 
+  /**
+   * 寻找属性，是否驼峰.其实取决于类里面的属性是否按照驼峰命名
+   * @param name
+   * @param useCamelCaseMapping
+   * @return
+   */
   public String findProperty(String name, boolean useCamelCaseMapping) {
     if (useCamelCaseMapping) {
       name = name.replace("_", "");
@@ -89,13 +101,23 @@ public class MetaClass {
     }
   }
 
+  /**
+   * 获取get属性类型
+   * @param name
+   * @return
+   */
   public Class<?> getGetterType(String name) {
+    // 创建PropertyTokenizer对象，对name分词
     PropertyTokenizer prop = new PropertyTokenizer(name);
+    // 有子表达式
     if (prop.hasNext()) {
+      // 创建MetaClass对象
       MetaClass metaProp = metaClassForProperty(prop);
+      // 递归返回
       return metaProp.getGetterType(prop.getChildren());
     }
     // issue #506. Resolve the type inside a Collection Object
+    // 直接返回类型
     return getGetterType(prop);
   }
 
@@ -105,7 +127,9 @@ public class MetaClass {
   }
 
   private Class<?> getGetterType(PropertyTokenizer prop) {
+    // 获取返回类型
     Class<?> type = reflector.getGetterType(prop.getName());
+    // 如果获取数组的某个位置的元素，则获取其泛型。例如说：list[0].field ，那么就会解析 list 是什么类型，这样才好通过该类型，继续获得 field
     if (prop.getIndex() != null && Collection.class.isAssignableFrom(type)) {
       Type returnType = getGenericGetterType(prop.getName());
       if (returnType instanceof ParameterizedType) {
@@ -126,11 +150,13 @@ public class MetaClass {
   private Type getGenericGetterType(String propertyName) {
     try {
       Invoker invoker = reflector.getGetInvoker(propertyName);
+      // 如果 MethodInvoker 对象，则说明是 getting 方法，解析方法返回类型
       if (invoker instanceof MethodInvoker) {
         Field declaredMethod = MethodInvoker.class.getDeclaredField("method");
         declaredMethod.setAccessible(true);
         Method method = (Method) declaredMethod.get(invoker);
         return TypeParameterResolver.resolveReturnType(method, reflector.getType());
+        // 如果 GetFieldInvoker 对象，则说明是 field ，直接访问
       } else if (invoker instanceof GetFieldInvoker) {
         Field declaredField = GetFieldInvoker.class.getDeclaredField("field");
         declaredField.setAccessible(true);
@@ -157,6 +183,11 @@ public class MetaClass {
     }
   }
 
+  /**
+   * 判断指定属性是否有get方法
+   * @param name
+   * @return
+   */
   public boolean hasGetter(String name) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {

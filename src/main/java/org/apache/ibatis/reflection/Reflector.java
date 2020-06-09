@@ -489,6 +489,7 @@ public class Reflector {
   }
 
   /**
+   * 获取 get 方法返回的类型
    * Gets the type for a property getter.
    *
    * @param propertyName - the name of the property
