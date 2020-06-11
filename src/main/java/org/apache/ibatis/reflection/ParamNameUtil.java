@@ -24,10 +24,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ParamNameUtil {
+  /**
+   * 获取方法的参数列表
+   * @param method
+   * @return
+   */
   public static List<String> getParamNames(Method method) {
     return getParameterNames(method);
   }
 
+  /**
+   * 获取构造方法的参数列表
+   * @param constructor
+   * @return
+   */
   public static List<String> getParamNames(Constructor<?> constructor) {
     return getParameterNames(constructor);
   }

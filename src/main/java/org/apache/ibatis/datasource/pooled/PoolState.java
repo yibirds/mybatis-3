@@ -23,17 +23,50 @@ import java.util.List;
  */
 public class PoolState {
 
+  /**
+   * 所属的 PooledDataSource 对象
+   */
   protected PooledDataSource dataSource;
 
+  /**
+   * 空闲连接集合
+   */
   protected final List<PooledConnection> idleConnections = new ArrayList<>();
+  /**
+   * 活跃连接集合
+   */
   protected final List<PooledConnection> activeConnections = new ArrayList<>();
+  /**
+   * 全局统计 - 获取连接的次数
+   */
   protected long requestCount = 0;
+  /**
+   * 全局统计 - 获取连接的时间
+   */
   protected long accumulatedRequestTime = 0;
+  /**
+   * 全局统计 - 获取到连接非超时 + 超时的占用时长
+   */
   protected long accumulatedCheckoutTime = 0;
+  /**
+   * 全局统计 - 获取到连接超时的次数
+   */
   protected long claimedOverdueConnectionCount = 0;
+  /**
+   * 局统计 - 获取到连接超时的占用时长
+   */
   protected long accumulatedCheckoutTimeOfOverdueConnections = 0;
+  /**
+   * 全局统计 - 等待连接的时间
+   */
   protected long accumulatedWaitTime = 0;
+  /**
+   * 全局统计 - 等待连接次数
+   */
   protected long hadToWaitCount = 0;
+  /**
+   * 全局统计 - 获取到坏的连接的次数
+   */
   protected long badConnectionCount = 0;
 
   public PoolState(PooledDataSource dataSource) {

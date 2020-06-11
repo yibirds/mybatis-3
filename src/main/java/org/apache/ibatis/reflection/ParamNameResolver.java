@@ -31,6 +31,9 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
+/**
+ * 参数名解析器
+ */
 public class ParamNameResolver {
 
   public static final String GENERIC_NAME_PREFIX = "param";
@@ -38,6 +41,7 @@ public class ParamNameResolver {
   private final boolean useActualParamName;
 
   /**
+   * 参数名映射
    * <p>
    * The key is the index and the value is the name of the parameter.<br />
    * The name is obtained from {@link Param} if specified. When {@link Param} is not specified,
@@ -62,12 +66,14 @@ public class ParamNameResolver {
     int paramCount = paramAnnotations.length;
     // get names from @Param annotations
     for (int paramIndex = 0; paramIndex < paramCount; paramIndex++) {
+      // 忽略特殊参数
       if (isSpecialParameter(paramTypes[paramIndex])) {
         // skip special parameters
         continue;
       }
       String name = null;
       for (Annotation annotation : paramAnnotations[paramIndex]) {
+        // 首先，获取@Param注解的value
         if (annotation instanceof Param) {
           hasParamAnnotation = true;
           name = ((Param) annotation).value();
@@ -76,17 +82,21 @@ public class ParamNameResolver {
       }
       if (name == null) {
         // @Param was not specified.
+        // 其次，获取参数的真实名称
         if (useActualParamName) {
           name = getActualParamName(method, paramIndex);
         }
         if (name == null) {
           // use the parameter index as the name ("0", "1", ...)
           // gcode issue #71
+          // 最差，使用Map的序号
           name = String.valueOf(map.size());
         }
       }
+      // 添加到map中
       map.put(paramIndex, name);
     }
+    // 添加到不可变集合中
     names = Collections.unmodifiableSortedMap(map);
   }
 
@@ -108,6 +118,7 @@ public class ParamNameResolver {
   }
 
   /**
+   * 获取参数名与值得映射
    * <p>
    * A single non-special parameter is returned without a name.
    * Multiple parameters are named using the naming rule.
@@ -121,17 +132,24 @@ public class ParamNameResolver {
    */
   public Object getNamedParams(Object[] args) {
     final int paramCount = names.size();
+    // 没有参数
     if (args == null || paramCount == 0) {
       return null;
+      // 只有一个非注解的参数，直接返回首元素
     } else if (!hasParamAnnotation && paramCount == 1) {
       Object value = args[names.firstKey()];
       return wrapToMapIfCollection(value, useActualParamName ? names.get(0) : null);
     } else {
+      // 集合。
+      // 组合 1 ：KEY：参数名，VALUE：参数值
+      // 组合 2 ：KEY：GENERIC_NAME_PREFIX + 参数顺序，VALUE ：参数值
       final Map<String, Object> param = new ParamMap<>();
       int i = 0;
       for (Map.Entry<Integer, String> entry : names.entrySet()) {
+        // 组合 1 ：添加到 param 中
         param.put(entry.getValue(), args[entry.getKey()]);
         // add generic param names (param1, param2, ...)
+        // 组合 2 ：添加到 param 中
         final String genericParamName = GENERIC_NAME_PREFIX + (i + 1);
         // ensure not to overwrite parameter named with @Param
         if (!names.containsValue(genericParamName)) {
