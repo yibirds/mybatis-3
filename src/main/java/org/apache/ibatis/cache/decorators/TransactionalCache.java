@@ -40,8 +40,17 @@ public class TransactionalCache implements Cache {
   private static final Log log = LogFactory.getLog(TransactionalCache.class);
 
   private final Cache delegate;
+  /**
+   * 是否提交前清空缓存
+   */
   private boolean clearOnCommit;
+  /**
+   * 准备添加到缓存的对象
+   */
   private final Map<Object, Object> entriesToAddOnCommit;
+  /**
+   * 不在缓存中的对象
+   */
   private final Set<Object> entriesMissedInCache;
 
   public TransactionalCache(Cache delegate) {
@@ -66,6 +75,7 @@ public class TransactionalCache implements Cache {
     // issue #116
     Object object = delegate.getObject(key);
     if (object == null) {
+      // 如果缓存不存在，添加到entriesMissedInCache中
       entriesMissedInCache.add(key);
     }
     // issue #146
@@ -112,9 +122,11 @@ public class TransactionalCache implements Cache {
   }
 
   private void flushPendingEntries() {
+    // 循环将待添加到缓存的对象写入到缓存中
     for (Map.Entry<Object, Object> entry : entriesToAddOnCommit.entrySet()) {
       delegate.putObject(entry.getKey(), entry.getValue());
     }
+    // 循环将缓存中不存在的对象的缓存值设置成null
     for (Object entry : entriesMissedInCache) {
       if (!entriesToAddOnCommit.containsKey(entry)) {
         delegate.putObject(entry, null);
