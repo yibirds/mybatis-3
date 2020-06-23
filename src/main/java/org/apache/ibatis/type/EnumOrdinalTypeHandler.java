@@ -41,6 +41,7 @@ public class EnumOrdinalTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E
 
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, E parameter, JdbcType jdbcType) throws SQLException {
+    // 将枚举类型的顺序设置到ps
     ps.setInt(i, parameter.ordinal());
   }
 

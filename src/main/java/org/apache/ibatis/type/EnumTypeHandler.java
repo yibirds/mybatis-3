@@ -36,6 +36,7 @@ public class EnumTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E> {
 
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, E parameter, JdbcType jdbcType) throws SQLException {
+    // 枚举类转换成String
     if (jdbcType == null) {
       ps.setString(i, parameter.name());
     } else {
@@ -45,6 +46,7 @@ public class EnumTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E> {
 
   @Override
   public E getNullableResult(ResultSet rs, String columnName) throws SQLException {
+    // String 转换成枚举类
     String s = rs.getString(columnName);
     return s == null ? null : Enum.valueOf(type, s);
   }
