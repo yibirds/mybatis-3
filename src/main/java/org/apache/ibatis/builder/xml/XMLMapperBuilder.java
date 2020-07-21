@@ -187,29 +187,51 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * <cache-ref namespace="com.someone.application.data.SomeMapper"/>
+   * @param context
+   */
   private void cacheRefElement(XNode context) {
     if (context != null) {
+      // 获得指向的 namespace 名字，并添加到 configuration 的 cacheRefMap 中
       configuration.addCacheRef(builderAssistant.getCurrentNamespace(), context.getStringAttribute("namespace"));
+      // 创建 CacheRefResolver 对象，并执行解析
       CacheRefResolver cacheRefResolver = new CacheRefResolver(builderAssistant, context.getStringAttribute("namespace"));
       try {
         cacheRefResolver.resolveCacheRef();
       } catch (IncompleteElementException e) {
+        // 解析失败，添加到 configuration 的 incompleteCacheRefs 中
         configuration.addIncompleteCacheRef(cacheRefResolver);
       }
     }
   }
 
+  /**
+   * // 使用默认缓存
+   * <cache eviction="FIFO" flushInterval="60000"  size="512" readOnly="true"/>
+   *
+   * // 使用自定义缓存
+   * <cache type="com.domain.something.MyCustomCache">
+   *   <property name="cacheFile" value="/tmp/my-custom-cache.tmp"/>
+   * </cache>
+   * @param context
+   */
   private void cacheElement(XNode context) {
     if (context != null) {
+      // 获得负责存储的 Cache 实现类
       String type = context.getStringAttribute("type", "PERPETUAL");
       Class<? extends Cache> typeClass = typeAliasRegistry.resolveAlias(type);
+      // 获得负责过期的 Cache 实现类
       String eviction = context.getStringAttribute("eviction", "LRU");
       Class<? extends Cache> evictionClass = typeAliasRegistry.resolveAlias(eviction);
+      // 获得 flushInterval、size、readWrite、blocking 属性
       Long flushInterval = context.getLongAttribute("flushInterval");
       Integer size = context.getIntAttribute("size");
       boolean readWrite = !context.getBooleanAttribute("readOnly", false);
       boolean blocking = context.getBooleanAttribute("blocking", false);
+      // 获取Properties属性
       Properties props = context.getChildrenAsProperties();
+      // 获取Cache
       builderAssistant.useNewCache(typeClass, evictionClass, flushInterval, size, readWrite, blocking, props);
     }
   }
@@ -254,8 +276,20 @@ public class XMLMapperBuilder extends BaseBuilder {
     return resultMapElement(resultMapNode, Collections.emptyList(), null);
   }
 
+  /**
+   * <resultMap type="Student" id="StudentResult">
+   *    <id property="stu_id" column="stu_id" />
+   *    <result property="name" column="name" />
+   *    <result property="email" column="email" />
+   * <resultMap/>
+   * @param resultMapNode
+   * @param additionalResultMappings
+   * @param enclosingType
+   * @return
+   */
   private ResultMap resultMapElement(XNode resultMapNode, List<ResultMapping> additionalResultMappings, Class<?> enclosingType) {
     ErrorContext.instance().activity("processing " + resultMapNode.getValueBasedIdentifier());
+    // 获取type属性
     String type = resultMapNode.getStringAttribute("type",
         resultMapNode.getStringAttribute("ofType",
             resultMapNode.getStringAttribute("resultType",
@@ -267,11 +301,15 @@ public class XMLMapperBuilder extends BaseBuilder {
     Discriminator discriminator = null;
     List<ResultMapping> resultMappings = new ArrayList<>(additionalResultMappings);
     List<XNode> resultChildren = resultMapNode.getChildren();
+    // 遍历 <resultMap /> 的子节点
     for (XNode resultChild : resultChildren) {
+      // 处理 <constructor /> 节点
       if ("constructor".equals(resultChild.getName())) {
         processConstructorElement(resultChild, typeClass, resultMappings);
+        // 处理 <discriminator /> 节点
       } else if ("discriminator".equals(resultChild.getName())) {
         discriminator = processDiscriminatorElement(resultChild, typeClass, resultMappings);
+        // 处理其它节点
       } else {
         List<ResultFlag> flags = new ArrayList<>();
         if ("id".equals(resultChild.getName())) {
@@ -280,14 +318,19 @@ public class XMLMapperBuilder extends BaseBuilder {
         resultMappings.add(buildResultMappingFromContext(resultChild, typeClass, flags));
       }
     }
+    // 获得 id 属性
     String id = resultMapNode.getStringAttribute("id",
             resultMapNode.getValueBasedIdentifier());
+    // 获得 extends 属性
     String extend = resultMapNode.getStringAttribute("extends");
+    // 获得 autoMapping 属性
     Boolean autoMapping = resultMapNode.getBooleanAttribute("autoMapping");
+    // 创建 ResultMapResolver 对象，执行解析
     ResultMapResolver resultMapResolver = new ResultMapResolver(builderAssistant, id, typeClass, extend, discriminator, resultMappings, autoMapping);
     try {
       return resultMapResolver.resolve();
     } catch (IncompleteElementException e) {
+      // 解析失败，添加到 configuration 中
       configuration.addIncompleteResultMap(resultMapResolver);
       throw e;
     }
